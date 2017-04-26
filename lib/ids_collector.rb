@@ -43,10 +43,10 @@ class IdsCollector
     threads = []
     Thread.abort_on_exception = false
     range_ids.each do |range_id|
-      ActiveRecord::Base.establish_connection(
-        adapter:  "sqlite3",
-        database: "db/development.sqlite3"
-      )
+      # ActiveRecord::Base.establish_connection(
+      #   adapter:  "sqlite3",
+      #   database: "db/development.sqlite3"
+      # )
       print "Start time: #{Time.now}"
       (0..99).each do |x|
         threads << Thread.new("#{@catalog_url}#{range_id}-#{x}") do |url_with_ids|
@@ -81,19 +81,25 @@ class IdsCollector
               next
             end
           end
-          @lock.synchronize do
-            begin
-              retries ||= 0
-              ActiveRecord::Base.establish_connection(
-                adapter:  "sqlite3",
-                database: "db/development.sqlite3"
-              )
-              User.import Thread.current[:users], on_duplicate_key_ignore: true
-              puts "Insert processed with #{Thread.current[:users].count} items"
-              ActiveRecord::Base.connection.close
-            rescue ActiveRecord::StatementInvalid, SQLite3::BusyException
-              retry if (retries += 1) < 3
-            end
+          # @lock.synchronize do
+            # begin
+              # retries ||= 0
+              # ActiveRecord::Base.establish_connection(
+                # adapter:  "postgresql",
+                # database: "vkget_development"
+              # )
+              begin
+                ActiveRecord::Base.connection_pool.with_connection do
+                  User.import Thread.current[:users], on_duplicate_key_ignore: true
+                end
+              ensure
+                puts "Insert processed with #{Thread.current[:users].count} items"
+                ActiveRecord::Base.connection_pool.release_connection
+              end
+                # ActiveRecord::Base.connection.close
+            # rescue ActiveRecord::StatementInvalid
+              # retry if (retries += 1) < 3
+            # end
           end
           print " #{Time.now}: pages processed #{@visited_pages.count} "
           Thread.exit
@@ -119,8 +125,15 @@ class IdsCollector
     response.each do |user_data|
 
       next if user_data["deactivated"] || Time.at(user_data["last_seen"]["time"]) < (DateTime.now - @days_offline)
-      # @lock
-      user = User.new
+      begin
+        ActiveRecord::Base.connection_pool.with_connection do
+          user = User.new
+        end
+      ensure
+        puts "Insert processed with #{Thread.current[:users].count} items"
+        ActiveRecord::Base.connection_pool.release_connection
+      end
+      
       user.id = user_data["id"]
       begin
         user.bdate = user_data["bdate"].to_date if !user_data["bdate"].blank?
