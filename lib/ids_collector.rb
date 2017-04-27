@@ -123,28 +123,20 @@ class IdsCollector
     end
     # users = []
     response.each do |user_data|
-
+      user = {}
       next if user_data["deactivated"] || Time.at(user_data["last_seen"]["time"]) < (DateTime.now - @days_offline)
-      begin
-        ActiveRecord::Base.connection_pool.with_connection do
-          user = User.new
-        end
-      ensure
-        puts "Insert processed with #{Thread.current[:users].count} items"
-        ActiveRecord::Base.connection_pool.release_connection
-      end
       
-      user.id = user_data["id"]
+      user[:id] = user_data["id"]
       begin
-        user.bdate = user_data["bdate"].to_date if !user_data["bdate"].blank?
+        user[:bdate] = user_data["bdate"].to_date if !user_data["bdate"].blank?
       rescue ArgumentError
         nil
       end
       
-      user.last_seen_platform = user_data["last_seen"]["platform"] if user_data["last_seen"]
+      user[:last_seen_platform] = user_data["last_seen"]["platform"] if user_data["last_seen"]
       if user_data["city"]
-        user.city_id = user_data["city"]["id"]
-        user.city_name = user_data["city"]["title"] if user_data["city"]
+        user[:city_id] = user_data["city"]["id"]
+        user[:city_name] = user_data["city"]["title"] if user_data["city"]
       end
 
       # if user_data["contacts"]
@@ -154,22 +146,22 @@ class IdsCollector
       # end
 
       if user_data["country"]
-        user.country_id = user_data["country"]["id"] 
-        user.country_title = user_data["country"]["title"] 
+        user[:country_id] = user_data["country"]["id"] 
+        user[:country_title] = user_data["country"]["title"] 
       end
       
       if user_data["education"]
-        user.university_id = user_data["education"]["university_id"] 
-        user.university_name = user_data["education"]["university_name"]
-        user.faculty_id = user_data["education"]["faculty_id"]
-        user.faculty_name = user_data["education"]["faculty_name"]
-        user.graduation_year = user_data["education"]["graduation_year"]
+        user[:university_id] = user_data["education"]["university_id"] 
+        user[:university_name] = user_data["education"]["university_name"]
+        user[:faculty_id] = user_data["education"]["faculty_id"]
+        user[:faculty_name] = user_data["education"]["faculty_name"]
+        user[:graduation_year] = user_data["education"]["graduation_year"]
       end
 
       if user_data["occupation"]
-        user.occupation_type = user_data["occupation"]["type"] 
-        user.occupation_id = user_data["occupation"]["id"]
-        user.occupation_name = user_data["occupation"]["name"]
+        user[:occupation_type] = user_data["occupation"]["type"] 
+        user[:occupation_id] = user_data["occupation"]["id"]
+        user[:occupation_name] = user_data["occupation"]["name"]
       end
 
       # puts user_data
