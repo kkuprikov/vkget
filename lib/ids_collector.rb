@@ -67,13 +67,7 @@ class IdsCollector
               catalog_with_ids.css('div.column2 a').each do |column|
                 ids << column[:href]
               end
-              begin
-                # Two subcatalogs for one api request
-                get_users_info(ids) if (ids.size > 0) && (y % 2 == 1)
-              rescue SQLite3::ConstraintException
-                print "Constraint exception caught..."
-              end    
-
+              get_users_info(ids) if (ids.size > 0) && (y % 2 == 1)
             rescue Errno::ETIMEDOUT, Errno::ECONNRESET, Net::OpenTimeout
               sleep(1)
               retry if (retries += 1) < 3
@@ -81,26 +75,16 @@ class IdsCollector
               next
             end
           end
-          # @lock.synchronize do
-            # begin
-              # retries ||= 0
-              # ActiveRecord::Base.establish_connection(
-                # adapter:  "postgresql",
-                # database: "vkget_development"
-              # )
-              begin
-                ActiveRecord::Base.connection_pool.with_connection do
-                  User.import Thread.current[:users], on_duplicate_key_ignore: true
-                end
-              ensure
-                puts "Insert processed with #{Thread.current[:users].count} items"
-                ActiveRecord::Base.connection_pool.release_connection
-              end
-                # ActiveRecord::Base.connection.close
-            # rescue ActiveRecord::StatementInvalid
-              # retry if (retries += 1) < 3
-            # end
+          
+          begin
+            ActiveRecord::Base.connection_pool.with_connection do
+              User.import Thread.current[:users], on_duplicate_key_ignore: true
+            end
+          ensure
+            puts "Insert processed with #{Thread.current[:users].count} items"
+            ActiveRecord::Base.connection_pool.release_connection
           end
+          
           print " #{Time.now}: pages processed #{@visited_pages.count} "
           Thread.exit
         end

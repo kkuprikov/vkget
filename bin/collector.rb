@@ -2,8 +2,8 @@ require './lib/ids_collector'
 require 'active_record'
 
 ActiveRecord::Base.establish_connection(
-  adapter: 'sqlite3',
-  database: 'db/development.sqlite3'
+  adapter: 'postgres',
+  database: 'vkget_development'
 )
 
 class User < ActiveRecord::Base
@@ -19,4 +19,4 @@ end
 
 c = IdsCollector.new
 
-c.collect_ids [18]
+c.collect_ids [0]
