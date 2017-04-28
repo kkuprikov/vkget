@@ -12,10 +12,6 @@ class IdsCollector
   attr_accessor :visited_pages
 
   def initialize
-    ActiveRecord::Base.establish_connection(
-      adapter: 'sqlite3',
-      database: 'db/development.sqlite3'
-    )
     @catalog_url = URI("https://vk.com/catalog.php?selection=")
     @api_url = URI("https://api.vk.com/method/")
     @days_offline = 14
@@ -47,14 +43,14 @@ class IdsCollector
       #   adapter:  "sqlite3",
       #   database: "db/development.sqlite3"
       # )
-      print "Start time: #{Time.now}"
+      puts "Start time: #{Time.now}"
       (0..99).each do |x|
         threads << Thread.new("#{@catalog_url}#{range_id}-#{x}") do |url_with_ids|
           Thread.current[:users] = []
           (0..99).each do |y|
             ids = []
             page = "#{url_with_ids}-#{y}"
-            # puts "Fetching #{url_with_ids}-#{x}-#{y}"
+#            print "Fetching #{url_with_ids}-#{y}"
             next if @visited_pages.include?(page)
             @visit_lock.synchronize do
               @visited_pages << page
@@ -67,50 +63,56 @@ class IdsCollector
               catalog_with_ids.css('div.column2 a').each do |column|
                 ids << column[:href]
               end
-              get_users_info(ids) if (ids.size > 0) && (y % 2 == 1)
+              get_users_info(ids) if (ids.size > 0)# && (y % 2 == 1)
             rescue Errno::ETIMEDOUT, Errno::ECONNRESET, Net::OpenTimeout
               sleep(1)
-              retry if (retries += 1) < 3
+              retry if (retries += 1) < 5
               retries = 0
               next
             end
           end
           
-          begin
-            ActiveRecord::Base.connection_pool.with_connection do
-              User.import Thread.current[:users], on_duplicate_key_ignore: true
-            end
-          ensure
-            puts "Insert processed with #{Thread.current[:users].count} items"
-            ActiveRecord::Base.connection_pool.release_connection
-          end
-          
-          print " #{Time.now}: pages processed #{@visited_pages.count} "
+#          begin
+#            ActiveRecord::Base.connection_pool.with_connection do
+#              User.import Thread.current[:users], on_duplicate_key_ignore: true
+#            end
+#          ensure
+#            puts "Insert processed with #{Thread.current[:users].count} items"
+#            ActiveRecord::Base.connection_pool.release_connection
+#          end
+#          
+       #   print " #{Time.now}: pages processed #{@visited_pages.count} "
           Thread.exit
         end
       end
-      threads.each { |thr| thr.join; ActiveRecord::Base.connection.close }
-      sleep(10)
+      threads.each { |thr| 
+        thr.join
+        User.import thr[:users], on_duplicate_key_ignore: true
+       # print "Insert processed with #{thr[:users].count} items "
+      }
+      puts "Stop time #{Time.now}"
     end
     # end
   end
 
   def get_users_info ids
-    users = Net::HTTP.get(URI("#{@api_url}users.get?user_ids=#{ids.join(",")}&fields=#{@fields}&v=5.63"))
-    save_data(Oj.load(users)["response"])
+    url = "#{@api_url}users.get?user_ids=#{ids.join(",")}&fields=#{@fields}&v=5.63"
+    users = Net::HTTP.get(URI(url))
+    response = Oj.load(users)["response"]
+   # response ? save_data(response) : puts "Response is nil! #{url}"
+    if response
+      save_data(response)
+    else
+      puts "Response is nil! #{url}"
+    end
   end
 
   def save_data response
-    if !response
-      print "Response is nil!"
-      return
-    end
-    # users = []
     response.each do |user_data|
       user = {}
       next if user_data["deactivated"] || Time.at(user_data["last_seen"]["time"]) < (DateTime.now - @days_offline)
+      user = user_data.except("city", "contacts", "country", "education", "occupation", "timezone", "hidden", "last_seen", "education_form", "education_status", "relation_partner", "facebook_name").symbolize_keys
       
-      user[:id] = user_data["id"]
       begin
         user[:bdate] = user_data["bdate"].to_date if !user_data["bdate"].blank?
       rescue ArgumentError
@@ -149,7 +151,6 @@ class IdsCollector
       end
 
       # puts user_data
-      user.attributes = user_data.except("city", "contacts", "country", "education", "occupation", "timezone", "hidden", "last_seen", "education_form", "education_status", "relation_partner", "facebook_name")
       Thread.current[:users] << user
     end
   end
