@@ -1,8 +1,9 @@
 require './lib/ids_collector'
 require 'active_record'
+require 'pg'
 
 ActiveRecord::Base.establish_connection(
-  adapter: 'postgres',
+  adapter: 'postgresql',
   database: 'vkget_development'
 )
 
@@ -19,4 +20,4 @@ end
 
 c = IdsCollector.new
 
-c.collect_ids [0]
+c.collect_ids [(User.last.id / 1000000) + 1]
