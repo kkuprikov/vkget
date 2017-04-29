@@ -7,4 +7,10 @@ class User < ApplicationRecord
   serialize :relatives, JSON
   serialize :universities, JSON
   serialize :groups, JSON
+
+  def groups= new_group
+    gr = self.groups || []
+    gr << new_group
+    write_attribute(:groups, gr)
+  end
 end

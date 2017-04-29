@@ -12,6 +12,7 @@ class IdsCollector
   attr_accessor :visited_pages
 
   def initialize
+    Net::HTTP.keep_alive_timeout = 5
     @catalog_url = URI("https://vk.com/catalog.php?selection=")
     @api_url = URI("https://api.vk.com/method/")
     @days_offline = 14
@@ -25,24 +26,12 @@ class IdsCollector
   end
 
 
-  def collect_ids range_ids#, refresh_visited_pages = false
-
-    #@visited_pages = [] if refresh_visited_pages
-
-    # html = Net::HTTP.get(@catalog_url)
-    # catalog = Nokogiri::HTML(html)
-    # range_urls = []
-    # catalog.css('div.column4 a').each do |column|
-    #   range_urls << column[:href].split("?").last
-    # end
+  def collect_ids range_ids
 
     threads = []
     Thread.abort_on_exception = false
     range_ids.each do |range_id|
-      # ActiveRecord::Base.establish_connection(
-      #   adapter:  "sqlite3",
-      #   database: "db/development.sqlite3"
-      # )
+
       puts "Start time: #{Time.now}"
       (0..99).each do |x|
         threads << Thread.new("#{@catalog_url}#{range_id}-#{x}") do |url_with_ids|
@@ -71,17 +60,6 @@ class IdsCollector
               next
             end
           end
-          
-#          begin
-#            ActiveRecord::Base.connection_pool.with_connection do
-#              User.import Thread.current[:users], on_duplicate_key_ignore: true
-#            end
-#          ensure
-#            puts "Insert processed with #{Thread.current[:users].count} items"
-#            ActiveRecord::Base.connection_pool.release_connection
-#          end
-#          
-       #   print " #{Time.now}: pages processed #{@visited_pages.count} "
           Thread.exit
         end
       end
@@ -125,12 +103,6 @@ class IdsCollector
         user[:city_name] = user_data["city"]["title"] if user_data["city"]
       end
 
-      # if user_data["contacts"]
-      #   user.mobile_phone = user_data["contacts"]["mobile_phone"] 
-      #   user.home_phone = user_data["contacts"]["home_phone"]
-      #   user.counters = user_data["contacts"]["counters"]
-      # end
-
       if user_data["country"]
         user[:country_id] = user_data["country"]["id"] 
         user[:country_title] = user_data["country"]["title"] 
@@ -150,16 +122,15 @@ class IdsCollector
         user[:occupation_name] = user_data["occupation"]["name"]
       end
 
-      # puts user_data
       Thread.current[:users] << user
     end
   end
 
-  def collect_groups
-    group_uri = URI("#{@api_url}groups.get?user_ids=#{id}&access_token=#{@access_token}&v=5.63")
-    puts group_uri
-    # JSON.parse(Net::HTTP.get(group_uri))["response"]["items"] rescue puts "ERROR URL #{group_uri}"
-    Oj.load(Net::HTTP.get(group_uri))["response"]["items"] rescue puts "ERROR URL #{group_uri}"
+  def collect_group_members id, offset
+    group_uri = URI("#{@api_url}groups.getMembers?group_id=#{id}&offset=#{offset}000&v=5.63")
+    res = Oj.load(Net::HTTP.get(group_uri))["response"]
+    puts res if !res["items"]
+    puts offset
   end
 
 end
