@@ -1,0 +1,8 @@
+.form-group
+  = semantic_form_for @dummy_user do |f|
+    = f.inputs :name => "Basic" do
+      = f.input :sex, as: :radio, collection: {"Male" => 1, "Female" => 0, "Undef" => nil}
+
+
+
+button.btn.btn-danger Nice
