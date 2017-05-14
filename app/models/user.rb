@@ -58,6 +58,10 @@ class User < ApplicationRecord
       where_clause += " and career like '%position\":\"#{params[:career]}%'"
     end
 
+    if params[:first_name]
+      where_clause += " and first_name like '%#{params[:career]}%'"
+    end
+
     if !where_clause.blank?
       where_clause.slice!(0..3)
       where_clause = "where #{where_clause}"
