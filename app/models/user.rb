@@ -30,11 +30,11 @@ class User < ApplicationRecord
     }
 
     if params[:age_from]
-      where_clause += " and bdate != '' and toDate(bdate) <= #{params[:age_from].to_i.ago.strftime('%Y-%m-%d')}"
+      where_clause += " and bdate != '' and toDate(bdate) <= #{params[:age_from].to_i.years.ago.strftime('%Y-%m-%d')}"
     end
 
     if params[:age_to]
-      where_clause += " and bdate != '' and toDate(bdate) >= #{params[:age_to].to_i.ago.strftime('%Y-%m-%d')}"
+      where_clause += " and bdate != '' and toDate(bdate) >= #{params[:age_to].to_i.years.ago.strftime('%Y-%m-%d')}"
     end
 
     if params[:age_undef]
