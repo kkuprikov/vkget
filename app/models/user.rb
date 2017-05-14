@@ -23,7 +23,7 @@ class User < ApplicationRecord
 
     #TODO: age from..to: get from birth date
 
-    where_keys = params.keys & ["city_id", "sex", "relation"]
+    where_keys = params.keys & ["city_id", "sex", "relation", "country_id"]
     where_keys.each { |key|
       key_ids = params[key].split(",").map{|x| "toString(#{x})"}.join(", ")
       where_clause += " and #{key} in (#{key_ids})"
@@ -63,6 +63,7 @@ class User < ApplicationRecord
       where_clause = "where #{where_clause}"
     end
     query = "select count(*) from vk.users #{where_clause}"
+    Rails.logger.error query
     Typhoeus.post('http://localhost:8123/', body: query).response_body
   end
 end
