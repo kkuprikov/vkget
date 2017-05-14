@@ -30,11 +30,11 @@ class User < ApplicationRecord
     }
 
     if params[:age_from]
-      where_clause += " and bdate != '' and toDate(bdate) <= #{params[:age_from].ago.strftime('%Y-%m-%d')}"
+      where_clause += " and bdate != '' and toDate(bdate) <= #{params[:age_from].to_i.ago.strftime('%Y-%m-%d')}"
     end
 
     if params[:age_to]
-      where_clause += " and bdate != '' and toDate(bdate) >= #{params[:age_to].ago.strftime('%Y-%m-%d')}"
+      where_clause += " and bdate != '' and toDate(bdate) >= #{params[:age_to].to_i.ago.strftime('%Y-%m-%d')}"
     end
 
     if params[:age_undef]
@@ -55,7 +55,7 @@ class User < ApplicationRecord
     end
 
     if params[:career]
-      where_clause += " and career like '%position\"=\"#{params[:career]}%'"
+      where_clause += " and career like '%position\":\"#{params[:career]}%'"
     end
 
     if !where_clause.blank?
