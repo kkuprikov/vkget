@@ -17,6 +17,7 @@ class User < ApplicationRecord
       tmp_where_clause = params[:group_id] ? "group_id IN (#{params[:group_id]}) " : ""
       tmp_where_clause += "AND " if params[:group_id] && params[:group_id_exclude]
       tmp_where_clause += params[:group_id_exclude] ? "group_id NOT IN (#{params[:group_id_exclude]}))" : ")"
+      where_clause += tmp_where_clause
     end
 
     where_keys = params.keys & ["city_id", "sex", "relation"]
