@@ -55,7 +55,7 @@ class User < ApplicationRecord
     end
 
     if params[:career]
-      where_clause += " and career like '%position"="#{params[:career]}%'"
+      where_clause += " and career like '%position\"=\"#{params[:career]}%'"
     end
 
     if !where_clause.blank?
