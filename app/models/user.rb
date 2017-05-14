@@ -16,7 +16,7 @@ class User < ApplicationRecord
       where_clause += " and toUInt64(user_id) IN (select user_id from vk.user_groups where "
       tmp_where_clause = params[:group_id] ? "group_id IN (#{params[:group_id]}) " : ""
       tmp_where_clause += "AND " if params[:group_id] && params[:group_id_exclude]
-      tmp_where_clause += "group_id NOT IN (#{params[:group_id_exclude]}))" if params[:group_id_exclude]
+      tmp_where_clause += params[:group_id_exclude] ? "group_id NOT IN (#{params[:group_id_exclude]}))" : ")"
     end
 
     where_keys = params.keys & ["city_id", "sex", "relation"]
