@@ -10,8 +10,8 @@ class User < ApplicationRecord
   def self.get_user_count_from_clickhouse params
     Rails.logger.error params.keys
     where_clause = ""
-    where_clause += " and toUInt64(user_id) IN (select user_id from vk.user_groups where group_id IN (#{params[:group_ids]}))" if params[:group_ids]
-    where_clause += " and toUInt64(user_id) NOT IN (select user_id from vk.user_groups where group_id IN (#{params[:group_ids_exclude]}))" if params[:group_ids_exclude]
+    where_clause += " and toUInt64(user_id) IN (select user_id from vk.user_groups where group_id IN (#{params[:group_id]}))" if params[:group_id]
+    where_clause += " and toUInt64(user_id) NOT IN (select user_id from vk.user_groups where group_id IN (#{params[:group_id_exclude]}))" if params[:group_id_exclude]
 
     # if params[:sex]
       # 0 - undef

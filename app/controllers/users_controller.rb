@@ -7,7 +7,7 @@ class UsersController < ApplicationController
   def count
     @count = User.get_user_count_from_clickhouse(params)
     respond_to do |format|
-      format.json { render json: @count.to_json }
+      format.json { render json: @count }
     end
   end
 
