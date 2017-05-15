@@ -31,7 +31,7 @@ class ApiController < ApplicationController
   private
 
   def get_dictionary id_column, data_column
-    query = "select distinct #{id_column}, #{data_column} from vk.users where #{data_column}!=''"
+    query = "select distinct #{id_column}, #{data_column} from vk.users where #{data_column}!='' format json"
     Rails.logger.error query
     res = Typhoeus.post('http://localhost:8123/', body: query).response_body
     Rails.logger.error res
