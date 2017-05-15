@@ -15,7 +15,7 @@ class ApiController < ApplicationController
   end
 
   def cities
-    population = params[:population] > 0 ? params[:population] : 0
+    population = params[:population].to_i > 0 ? params[:population].to_i : 0
     query = "select * from (select distinct city_id, city_name, count(*) as pop from vk.users where city_name!='' and country_id=toString(#{params[:country_id]}) group by city_id, city_name, country_id) where pop > #{params[:population]} format JSON;"
     Rails.logger.error query
     res = Typhoeus.post('http://localhost:8123/', body: query).response_body
