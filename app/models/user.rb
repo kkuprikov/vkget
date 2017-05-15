@@ -30,11 +30,13 @@ class User < ApplicationRecord
     }
 
     if params[:age_from]
-      where_clause += " and bdate != '' and toDate(bdate) <= toDate(#{params[:age_from].to_i.years.ago.strftime('%Y-%m-%d')})"
+      from_clause = "(select * from vk.users where bdate != '')"
+      where_clause += " and toDate(bdate) <= toDate('#{params[:age_from].to_i.years.ago.strftime('%Y-%m-%d')}')"
     end
 
     if params[:age_to]
-      where_clause += " and bdate != '' and toDate(bdate) >= toDate(#{params[:age_to].to_i.years.ago.strftime('%Y-%m-%d')})"
+      from_clause = "(select * from vk.users where bdate != '')"
+      where_clause += " and toDate(bdate) >= toDate('#{params[:age_to].to_i.years.ago.strftime('%Y-%m-%d')}')"
     end
 
     if params[:age_undef]
@@ -59,14 +61,15 @@ class User < ApplicationRecord
     end
 
     if params[:first_name]
-      where_clause += " and first_name like '%#{params[:career]}%'"
+      where_clause += " and first_name like '%#{params[:first_name]}%'"
     end
 
     if !where_clause.blank?
       where_clause.slice!(0..3)
       where_clause = "where #{where_clause}"
     end
-    query = "select count(*) from vk.users #{where_clause}"
+    from_clause ||= "vk.users" 
+    query = "select count(*) from #{from_clause} #{where_clause}"
     Rails.logger.error query
     Typhoeus.post('http://localhost:8123/', body: query).response_body
   end
