@@ -15,14 +15,17 @@ class ApiController < ApplicationController
   end
 
   def cities
-    res = params[:country_id] ? get_dictionary("city_id", "city_name", "country_id=toString(#{params[:country_id]})") : ""
+    population = params[:population] > 0 ? params[:population] : 0
+    query = "select * from (select distinct city_id, city_name, count(*) as pop from vk.users where city_name!='' and country_id=toString(#{params[:country_id]}) group by city_id, city_name, country_id) where pop > #{params[:population]} format JSON;"
+    Rails.logger.error query
+    res = Typhoeus.post('http://localhost:8123/', body: query).response_body
     respond_to do |format|
       format.json { render json: JSON.parse(res) }
     end
   end
 
   def universities
-    res = get_dictionary("university", "university_name")
+    res = get_dictionary("university", "university_name", "country_id=toString(#{params[:country_id]})")
     respond_to do |format|
       format.json { render json: JSON.parse(res) }
     end
