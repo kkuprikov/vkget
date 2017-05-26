@@ -13,7 +13,7 @@ class User < ApplicationRecord
   end
 
   def self.get_user_ids_from_clickhouse params
-    params[:fields] = "id"
+    params[:fields] = "user_id"
     get_from_clickhouse params
   end  
 
