@@ -9,10 +9,12 @@ class User < ApplicationRecord
 
   def self.get_user_count_from_clickhouse params
     params[:fields] = "count(*)"
+    get_from_clickhouse params
   end
 
   def self.get_user_ids_from_clickhouse params
     params[:fields] = "id"
+    get_from_clickhouse params
   end  
 
   def self.get_from_clickhouse params
