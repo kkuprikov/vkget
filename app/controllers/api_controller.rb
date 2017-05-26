@@ -7,6 +7,14 @@ class ApiController < ApplicationController
     end
   end
 
+  def user_ids
+    @count = User.get_user_ids_from_clickhouse(params)
+    respond_to do |format|
+      format.json { render json: @count }
+    end
+  end
+
+
   def countries
     res = get_dictionary("country_id", "country_title")
     respond_to do |format|

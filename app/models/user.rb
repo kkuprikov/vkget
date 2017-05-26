@@ -8,20 +8,18 @@ class User < ApplicationRecord
   serialize :universities, JSON
 
   def self.get_user_count_from_clickhouse params
+    params[:fields] = "count(*)"
+  end
+
+  def self.get_user_ids_from_clickhouse params
+    params[:fields] = "id"
+  end  
+
+  def self.get_from_clickhouse params
     Rails.logger.error params.keys
     where_clause = ""
     where_clause += " and toUInt64(user_id) IN (select user_id from vk.user_groups where group_id IN (#{params[:group_id]}))" if params[:group_id]
     where_clause += " and toUInt64(user_id) NOT IN (select user_id from vk.user_groups where group_id IN (#{params[:group_id_exclude]}))" if params[:group_id_exclude]
-
-    # if params[:sex]
-      # 0 - undef
-      # 1 - female
-      # 2 - male
-    #   sex_ids = params[:sex].split(",").map{|x| "toString(#{x})"}.join(", ")
-    #   where_clause += "and sex in (#{sex_ids})"
-    # end
-
-    #TODO: age from..to: get from birth date
 
     where_keys = params.keys & ["city_id", "sex", "relation", "country_id"]
     where_keys.each { |key|
@@ -69,7 +67,7 @@ class User < ApplicationRecord
       where_clause = "where #{where_clause}"
     end
     from_clause ||= "vk.users" 
-    query = "select count(*) from #{from_clause} #{where_clause}"
+    query = "select #{params[:fields]} from #{from_clause} #{where_clause}"
     Rails.logger.error query
     Typhoeus.post('http://localhost:8123/', body: query).response_body
   end
