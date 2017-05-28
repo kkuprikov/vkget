@@ -8,9 +8,15 @@ class ApiController < ApplicationController
   end
 
   def user_ids
-    @count = User.get_user_ids_from_clickhouse(params)
+    @ids = User.get_user_ids_from_clickhouse(params)
     respond_to do |format|
-      format.json { render json: @count }
+      format.json { 
+        # render json: @count 
+        fname = "vk_ids_#{DateTime.now.to_i}.csv"
+        send_data CSV.generate(@ids),
+          :type => 'text/csv; charset=iso-8859-1; header=present',
+          :disposition => "attachment; filename=#{fname}.csv"
+      }
     end
   end
 
