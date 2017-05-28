@@ -13,8 +13,8 @@ class ApiController < ApplicationController
     respond_to do |format|
       format.json { 
         # render json: @count 
-        fname = "vk_ids_#{DateTime.now.to_i}.csv"
-        send_data CSV.generate(@ids),
+        fname = "vk_ids_#{DateTime.now.to_i}"
+        send_data CSV.generate(@ids){},
           :type => 'text/csv; charset=iso-8859-1; header=present',
           :disposition => "attachment; filename=#{fname}.csv"
       }
