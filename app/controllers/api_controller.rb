@@ -1,3 +1,4 @@
+require 'csv'
 class ApiController < ApplicationController
 
   def users_count
